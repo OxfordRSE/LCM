@@ -5,6 +5,7 @@ Conversion from one data format to another for laser microdissection of post mor
 ```
 git clone https://github.com/OxfordRSE/LCM.git
 ```
+or download the `zip` archive from the github repository.
 ## Usage
 ```
 $ cd LCM/
