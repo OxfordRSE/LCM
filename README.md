@@ -9,6 +9,6 @@ or download the `zip` archive from the github repository.
 ## Usage
 ```
 $ cd LCM/
-$ python from_IA_to_LCM.py input_file
+$ python from_IA_to_LCM.py test_IA_file.txt
 ```
 where `input_file` is the input file to be converted.
