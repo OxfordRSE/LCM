@@ -16,12 +16,12 @@ def do_transformation(list_of_tuples):
 
 
 def write_header(fid, version, date, time):
-    fid.write('PALMRobo Elements\n')
-    fid.write('Version:,{}\n'.format(version))
-    fid.write('Date, Time:,{},{}\n'.format(date, time))
+    fid.write('"PALMRobo Elements"\n')
+    fid.write('"Version:","{}"\n'.format(version))
+    fid.write('"Date, Time:",{},{}\n'.format(date, time))
     fid.write('\n')
-    fid.write('MICROMETER\n')
-    fid.write('Elements :\n')
+    fid.write('"MICROMETER"\n')
+    fid.write('"Elements :"\n')
     fid.write('\n')
 
 
@@ -52,8 +52,8 @@ csv_file = open(converted_file, 'a')
 write_header(csv_file, version, date, time)
 
 for s in column_names[:-1]:
-    csv_file.write('{},'.format(s))
-csv_file.write('{}'.format(column_names[-1]))
+    csv_file.write('"{}",'.format(s))
+csv_file.write('"{}"'.format(column_names[-1]))
 csv_file.write('\n\n')
 
 df_head = pd.read_csv('values.csv', sep='\t', names=column_names)
@@ -78,7 +78,7 @@ for i, line in enumerate(IA_file):
 
     # Convert list of tuples to list of string
     # ["x1,y1", "x2,y2"...]
-    list_of_strings = ['{},{}'.format(t[0], t[1]) for t in list_of_tuples]
+    list_of_strings = ['{:.1f},{:.1f}'.format(t[0], t[1]) for t in list_of_tuples]
 
     # Reshape list of strings into a list of lists.
     # Each sublist has 5 elements
