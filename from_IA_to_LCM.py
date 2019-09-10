@@ -15,10 +15,10 @@ def do_transformation(list_of_tuples):
         list_of_tuples[i] = A.dot(point+(1.0,))
 
 
-def write_header(fid, version, date, time):
+def write_header(fid, version, date, time, delimiter):
     fid.write('"PALMRobo Elements"\n')
-    fid.write('"Version:","{}"\n'.format(version))
-    fid.write('"Date, Time:",{},{}\n'.format(date, time))
+    fid.write(delimiter.join(('"Version:"', '"{}"'.format(version))) + '\n')
+    fid.write(delimiter.join(('"Date, Time:"', date, time)) + '\n')
     fid.write('\n')
     fid.write('"MICROMETER"\n')
     fid.write('"Elements :"\n')
@@ -30,6 +30,7 @@ date = '26/11/18'
 time = '17:20:54'
 column_names = ["Type", "Color", "Thickness", "No",
                 "CutShot", "Area", "Z", "Comment", "Coordinates"]
+delimiter = '\t'
 
 try:
     file_to_convert = sys.argv[1]
@@ -49,11 +50,9 @@ if os.path.isfile(converted_file):
     os.remove(converted_file)
 csv_file = open(converted_file, 'a')
 
-write_header(csv_file, version, date, time)
+write_header(csv_file, version, date, time, delimiter)
 
-for s in column_names[:-1]:
-    csv_file.write('"{}",'.format(s))
-csv_file.write('"{}"'.format(column_names[-1]))
+csv_file.write(delimiter.join(column_names))
 csv_file.write('\n\n')
 
 df_head = pd.read_csv('values.csv', sep='\t', names=column_names)
@@ -61,7 +60,7 @@ df_head = pd.read_csv('values.csv', sep='\t', names=column_names)
 
 for i, line in enumerate(IA_file):
     # Write first two rows
-    df_head[i:i+1].to_csv(csv_file, sep=',', index=False, header=False)
+    df_head[i:i+1].to_csv(csv_file, sep=delimiter, index=False, header=False)
 
     # Parse IA file and build list of tuples (x,y)
     line = line.split(":")
@@ -103,7 +102,7 @@ for i, line in enumerate(IA_file):
     # Build pandas DataFrame from list of lists
     # and update output csv file
     df = pd.DataFrame(alist)
-    df.to_csv(csv_file, sep=',', index=False, header=False)
+    df.to_csv(csv_file, sep=delimiter, index=False, header=False)
 
     # Jump to lines and loop back to next line in IA input file
     csv_file.write('\n\n')
