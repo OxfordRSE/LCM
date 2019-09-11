@@ -5,11 +5,6 @@ import numpy as np
 
 
 def do_transformation(list_of_tuples):
-    #A = np.array([
-    #    [-5.38962845e-01, -2.53570223e-05,  1.47499825e+05],
-    #    [5.90645789e-07, -6.40176586e-01,  6.24988500e+04],
-    #    [0.00000000e+00,  0.00000000e+00,  1.00000000e+00],
-    #])
 
     A = np.array([
             [ 6.12911710e-04,-5.01026037e-01, 1.10602869e+05],
@@ -23,12 +18,12 @@ def do_transformation(list_of_tuples):
 
 
 def write_header(fid, version, date, time, delimiter):
-    fid.write('"PALMRobo Elements"\n')
-    fid.write(delimiter.join(('"Version:"', '"{}"'.format(version))) + '\n')
-    fid.write(delimiter.join(('"Date, Time:"', date, time)) + '\n')
+    fid.write('PALMRobo Elements\n')
+    fid.write(delimiter.join(('Version:', '"{}"'.format(version))) + '\n')
+    fid.write(delimiter.join(('Date, Time:', date, time)) + '\n')
     fid.write('\n')
-    fid.write('"MICROMETER"\n')
-    fid.write('"Elements :"\n')
+    fid.write('MICROMETER\n')
+    fid.write('Elements :\n')
     fid.write('\n')
 
 
@@ -55,7 +50,7 @@ rootname, ext = os.path.splitext(file_to_convert)
 converted_file = '{}_converted_to_LCM.csv'.format(rootname)
 if os.path.isfile(converted_file):
     os.remove(converted_file)
-csv_file = open(converted_file, 'a')
+csv_file = open(converted_file, 'a', newline='\r\n')
 
 write_header(csv_file, version, date, time, delimiter)
 
