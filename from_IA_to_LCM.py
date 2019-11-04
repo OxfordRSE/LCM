@@ -2,15 +2,11 @@ import sys
 import os
 import pandas as pd
 import numpy as np
+import numpy.linalg
+import re
 
 
-def do_transformation(list_of_tuples):
-
-    A = np.array(
-         [ 1.08902567e-10 -2.57796678e-01  1.11145913e+05],
-         [-1.50545172e-01 -4.93589614e-11  4.56373490e+04],
-         [ 0.00000000e+00  0.00000000e+00  1.00000000e+00],
-    ])
+def do_transformation(list_of_tuples, A):
 
     for i, point in enumerate(list_of_tuples):
         list_of_tuples[i] = A.dot(point+(1.0,))
@@ -25,6 +21,67 @@ def write_header(fid, version, date, time, delimiter):
     fid.write('Elements :\n')
     fid.write('\n')
 
+def calculate_transform_matrix(x, xp):
+    X = np.kron(np.eye(2), np.concatenate((x, np.ones((x.shape[0], 1))), axis=1))
+    b = np.concatenate((xp[:, 0], xp[:, 1])).reshape((2*x.shape[0], 1))
+
+    a,residuals,rank,s = np.linalg.lstsq(X, b, rcond=None)
+
+    print('residuals = \n{}'.format(residuals))
+
+    A = np.array([
+        [a[0,0], a[1,0], a[2,0]],
+        [a[3,0], a[4,0], a[5,0]],
+        [0, 0, 1],
+    ])
+
+
+    print('A = \n{}'.format(A))
+
+    return A
+
+
+def calculate_transform():
+    filename = 'reference_points.dat'
+    ref_pt_file = open(filename, 'r')
+    line = ref_pt_file.readline()
+    if line[:3] != '#ia':
+        raise RuntimeError('Expecting 1st line of {} to be "#ia"');
+
+    point_regex = re.compile(r'\(\s*([0-9\.]+)\s*\,\s*([0-9\.]+\s*)\)')
+    lcm_regex = re.compile(r'\(\s*([0-9\.]+)\s*\,\s*([0-9\.]+\s*)\)')
+    line = ref_pt_file.readline()
+
+    ia_points = []
+    while '#lcm' not in line:
+        m = point_regex.match(line)
+        if m is None:
+            raise RuntimeError('Error: line "{}" did not match point format "(x,y)"'.format(line[:-1]))
+        x = m.group(1)
+        y = m.group(2)
+        ia_points.append([x, y])
+
+        line = ref_pt_file.readline()
+    ia_points = np.array(ia_points, dtype=float)
+
+    print('IA points = \n{}'.format(ia_points))
+
+    line = ref_pt_file.readline()
+    lcm_points = []
+    while line:
+        m = point_regex.match(line)
+        if m is None:
+            raise RuntimeError('Error: line "{}" did not match point format "(x,y)"'.format(line[:-1]))
+        x = m.group(1)
+        y = m.group(2)
+        lcm_points.append([x, y])
+
+        line = ref_pt_file.readline()
+    lcm_points = np.array(lcm_points, dtype=float)
+    print('LCM points = \n{}'.format(lcm_points))
+
+    return calculate_transform_matrix(ia_points, lcm_points)
+
 
 version = 'V 4.8.0.1'
 date = '26/11/18'
@@ -32,6 +89,7 @@ time = '17:20:54'
 column_names = ["Type", "Color", "Thickness", "No",
                 "CutShot", "Area", "Z", "Comment", "Coordinates"]
 delimiter = '\t'
+
 
 try:
     file_to_convert = sys.argv[1]
@@ -58,6 +116,7 @@ csv_file.write('\n\n')
 
 df_head = pd.read_csv('values.csv', sep='\t', names=column_names)
 
+A = calculate_transform()
 
 for i, line in enumerate(IA_file):
     # Write first two rows
@@ -74,7 +133,7 @@ for i, line in enumerate(IA_file):
     list_of_tuples = [(float(s.split(', ')[0]), float(s.split(', ')[1]))
                       for s in filtered_list]
 
-    do_transformation(list_of_tuples)
+    do_transformation(list_of_tuples, A)
 
     # Convert list of tuples to list of string
     # ["x1,y1", "x2,y2"...]
