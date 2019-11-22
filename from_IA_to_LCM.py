@@ -5,6 +5,8 @@ import numpy as np
 import numpy.linalg
 import re
 
+add_rotation = 0
+
 
 def do_transformation(list_of_tuples, A):
 
@@ -21,20 +23,29 @@ def write_header(fid, version, date, time, delimiter):
     fid.write('Elements :\n')
     fid.write('\n')
 
+
 def calculate_transform_matrix(x, xp):
     X = np.kron(np.eye(2), np.concatenate((x, np.ones((x.shape[0], 1))), axis=1))
     b = np.concatenate((xp[:, 0], xp[:, 1])).reshape((2*x.shape[0], 1))
 
-    a,residuals,rank,s = np.linalg.lstsq(X, b, rcond=None)
+    a, residuals, rank, s = np.linalg.lstsq(X, b, rcond=None)
 
     print('residuals = \n{}'.format(residuals))
 
     A = np.array([
-        [a[0,0], a[1,0], a[2,0]],
-        [a[3,0], a[4,0], a[5,0]],
+        [a[0, 0], a[1, 0], a[2, 0]],
+        [a[3, 0], a[4, 0], a[5, 0]],
         [0, 0, 1],
     ])
 
+    r = np.radians(add_rotation)
+    rot = np.array([
+        [np.cos(r), -np.sin(r), 0],
+        [np.sin(r), np.cos(r), 0],
+        [0, 0, 1],
+    ])
+
+    A = A.dot(rot)
 
     print('A = \n{}'.format(A))
 
@@ -46,7 +57,7 @@ def calculate_transform():
     ref_pt_file = open(filename, 'r')
     line = ref_pt_file.readline()
     if line[:3] != '#ia':
-        raise RuntimeError('Expecting 1st line of {} to be "#ia"');
+        raise RuntimeError('Expecting 1st line of {} to be "#ia"')
 
     point_regex = re.compile(r'\(\s*([0-9\.]+)\s*\,\s*([0-9\.]+\s*)\)')
     lcm_regex = re.compile(r'\(\s*([0-9\.]+)\s*\,\s*([0-9\.]+\s*)\)')
@@ -56,12 +67,15 @@ def calculate_transform():
     while '#lcm' not in line:
         m = point_regex.match(line)
         if m is None:
-            raise RuntimeError('Error: line "{}" did not match point format "(x,y)"'.format(line[:-1]))
-        x = m.group(1)
-        y = m.group(2)
-        ia_points.append([x, y])
+            print(
+                'Warning: line "{}" did not match point format "(x,y)", ignoring...'.format(line[:-1]))
+        else:
+            x = m.group(1)
+            y = m.group(2)
+            ia_points.append([x, y])
 
         line = ref_pt_file.readline()
+    n_points = len(ia_points)
     ia_points = np.array(ia_points, dtype=float)
 
     print('IA points = \n{}'.format(ia_points))
@@ -71,12 +85,17 @@ def calculate_transform():
     while line:
         m = point_regex.match(line)
         if m is None:
-            raise RuntimeError('Error: line "{}" did not match point format "(x,y)"'.format(line[:-1]))
-        x = m.group(1)
-        y = m.group(2)
-        lcm_points.append([x, y])
+            print(
+                'Warning: line "{}" did not match point format "(x,y)", ignoring...'.format(line[:-1]))
+        else:
+            x = m.group(1)
+            y = m.group(2)
+            lcm_points.append([x, y])
 
         line = ref_pt_file.readline()
+    if len(lcm_points) != n_points:
+        raise RuntimeError('Number of ia points({}), is not equal to the number of \
+                            lcm points ({})'.format(n_points, len(lcm_points)))
     lcm_points = np.array(lcm_points, dtype=float)
     print('LCM points = \n{}'.format(lcm_points))
 
