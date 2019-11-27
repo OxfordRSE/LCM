@@ -134,13 +134,14 @@ write_header(csv_file, version, date, time, delimiter)
 csv_file.write(delimiter.join(column_names))
 csv_file.write('\n\n')
 
-df_head = pd.read_csv('values.csv', sep='\t', names=column_names)
+df_head = delimiter.join(['Freehand','green','2','{}','0,0','533','6880','.\n'])
 
 A = calculate_transform()
 
 for i, line in enumerate(IA_file):
-    # Write first two rows
-    df_head[i:i+1].to_csv(csv_file, sep=delimiter, index=False, header=False)
+    # Write the header
+    csv_file.write(df_head.format(i+1))
+
 
     # Parse IA file and build list of tuples (x,y)
     line = line.split(":")
